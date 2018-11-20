@@ -1,0 +1,7 @@
+# example commit
+curl -X POST -H 'Content-type: application/json' -d '{"committername":"pippo","projectname":"etw-api","language":"","hash":"qwe","email":"pippo@pluto.it","url":"https://10.11.19.90:8443/scm/gops/etw-api.git","username":"canep"}' http://localhost:8082/stash
+{"type":"PlainText","payload":"fWxsdW46ImVtYW5yZXN1IixsbHVuOiJscnUiLGxsdW46ImRpIiwiYXZhSiI6ImVnYXVnbmFsIixlc2xhZjoiZWxiYWxpYXZhIixsbHVuOiJzbmlrbmVKZGkiLCJ0Y2Vqb3JQeXRpcnVjZVMuZGVyYWhzLnJjIjoic3NhbGNAIixsbHVuOiJkcm93c3NhcCJ7"}
+
+# a real project commit 
+curl -X POST -H 'Content-type: application/json' -d '{"committername":"pippo","projectname":"etw-api","language":"","hash":"4afac4668cb9f38d7acb1b1d646181cf1cdb8e2b","email":"pippo@pluto.it","url":"https://10.11.19.90:8443/scm/gops/etw-api.git","username":"canep"}' http://localhost:8082/stash
+{"type":"PlainText","payload":"fSJwZW5hYyI6ImVtYW5yZXN1IiwidGlnLmlwYS13dGUvc3BvZy9tY3MvMzQ0ODowOS45MS4xMS4wMS8vOnNwdHRoIjoibHJ1IiwidGkub3R1bHBAb3BwaXAiOiJsaWFtZSIsImIyZThiZGMxZmMxODE2NDZkMWIxYmNhN2Q4M2Y5YmM4NjY0Y2FmYTQiOiJoc2FoIiwiIjoiZWdhdWduYWwiLCJ0aW1tb0MuZGVyYWhzLnJjIjoic3NhbGNAIiwiaXBhLXd0ZSI6ImVtYW50Y2Vqb3JwIiwib3BwaXAiOiJlbWFucmV0dGltbW9jIns="}

@@ -1,0 +1,129 @@
+package is.util;
+
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Collections;
+import java.util.Optional;
+import java.util.function.Predicate;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.offbytwo.jenkins.JenkinsServer;
+import com.offbytwo.jenkins.model.Build;
+import com.offbytwo.jenkins.model.BuildChangeSetItem;
+import com.offbytwo.jenkins.model.BuildResult;
+import com.offbytwo.jenkins.model.BuildWithDetails;
+import com.offbytwo.jenkins.model.JobWithDetails;
+
+import is.conf.JenkinsInstanceJobList;
+
+public class JenkinsAdapter {
+	private Logger root = LoggerFactory.getLogger(getClass());
+	private JenkinsServer jenkins = null;
+	private JenkinsInstanceJobList jenkinsInstanceJobList = null;
+	private String user;
+	private String password;
+
+
+	public JenkinsAdapter(JenkinsInstanceJobList jenkinsInstanceJobList, String user, String password) throws URISyntaxException {
+		this.jenkinsInstanceJobList=jenkinsInstanceJobList;
+		this.password = password;
+		this.user = user;
+		setJenkins(connect2Jenkins(this.jenkinsInstanceJobList, this.user, this.password));
+	}
+	
+	
+
+	public JenkinsInstanceJobList getJenkinsInstanceJob() {
+		return jenkinsInstanceJobList;
+	}
+
+	public void setJenkinsInstanceJob(JenkinsInstanceJobList jenkinsInstanceJobList) {
+		this.jenkinsInstanceJobList = jenkinsInstanceJobList;
+	}
+
+	public JenkinsServer getJenkins() {
+		return jenkins;
+	}
+
+	public void setJenkins(JenkinsServer jenkins) {
+		this.jenkins = jenkins;
+	}
+
+	public JenkinsServer connect2Jenkins(JenkinsInstanceJobList jenkinsInstanceJobList, String user, String password) throws URISyntaxException {
+		root.info("connecting to jenkins server at " + jenkinsInstanceJobList.getUrl());
+		this.jenkinsInstanceJobList = jenkinsInstanceJobList;
+		return new JenkinsServer(new URI(jenkinsInstanceJobList.getUrl()), user, password);
+	}
+
+	public BuildResult getBuildResult(int buildNumber, JenkinsServer jenkins, String job) throws IOException {
+		BuildResult status = jenkins.getJob(job).getBuildByNumber(buildNumber).details().getResult();
+		if (status != null) {
+			return status;
+		} else {
+			return BuildResult.BUILDING;
+		}
+	}
+
+	public boolean isBuilding(String job) throws IOException {
+		JobWithDetails jwd = jenkins.getJob(job);
+		Build build = jwd.getLastBuild();
+		BuildWithDetails bwd = build.details();
+		BuildResult status = bwd.getResult();
+		System.out.println(status);
+		if (status == null) {
+			return true;
+		} else {
+			if (status.equals(BuildResult.BUILDING)) {
+				return true;
+			} else
+				return false;
+		}
+	}
+
+	public Build getBuildFromCommit(String commit, JenkinsServer jenkins, String job) throws IOException {
+		root.info("Searching build for commit " + commit + " on server " + jenkinsInstanceJobList.getUrl() + " for job " + job);
+		Predicate<Build> p = new Predicate<Build>() {
+			@Override
+			public boolean test(Build t) {
+				// TODO Auto-generated method stub
+				Predicate<BuildChangeSetItem> p2 = new Predicate<BuildChangeSetItem>() {
+					@Override
+					public boolean test(BuildChangeSetItem t2) {
+						// TODO Auto-generated method stub
+						boolean ret = t2.getCommitId().equals(commit);
+						return ret;
+					}
+				};
+				try {
+					if (t.details().getChangeSet().getItems().stream().filter(p2).findFirst().isPresent())
+						return true;
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				return false;
+			}
+		};
+		Optional<Build> build = jenkins.getJob(job).getBuilds().stream().filter(p).findFirst();
+		if (build.isPresent())
+			return build.get();
+		root.info("No build found for commit " + commit + " on server " + jenkinsInstanceJobList.getUrl());
+		return null;
+	}
+
+	public int getBuildNumberFromCommit(String commit, JenkinsServer jenkins, String job) throws IOException {
+		Build build = getBuildFromCommit(commit, jenkins, job);
+		if (build != null)
+			return build.getNumber();
+		root.info("Unable to find a build number for commit " + commit);
+		return -1;
+	}
+
+	public int getLastBuild(JenkinsServer jenkins, String job) throws IOException {
+		root.info("Searching for last build on jenkins " + jenkinsInstanceJobList.getUrl() + " of job " + job);
+		return Collections.max(jenkins.getJob(job).getBuilds(), new BuildNumberComparator()).getNumber();
+	}
+}
